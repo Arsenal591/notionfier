@@ -1,0 +1,2 @@
+mistune==2.0.4
+notion-client==1.0.0
