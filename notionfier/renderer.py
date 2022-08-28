@@ -199,5 +199,10 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
             )
         ]
 
+    def strikethrough(self, children_objects: List[NotionObject]):
+        text_objects, block_objects = _split_list_of_notion_objects(children_objects)
+        assert len(block_objects) == 0
+        return [_process_annotation(x, "strikethrough", True) for x in text_objects]
+
     def finalize(self, data):
         return [item for sublist in data for item in sublist]
