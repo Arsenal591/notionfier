@@ -71,7 +71,11 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
 
     def image(self, src, alt="", title: Optional[List[NotionObject]] = None):
         # todo: image caption
-        block = Image(image=Image.Content(external=ExternalFile(url=src)))
+        block = Image(
+            image=Image.Content(
+                external=ExternalFile(url=src), caption=[Text(text=Text.Content(content=alt))]
+            )
+        )
         return [block]
 
     def emphasis(self, children_objects: List[NotionObject]):

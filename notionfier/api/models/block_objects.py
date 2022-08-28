@@ -103,6 +103,7 @@ class Image(BlockObject):
     @dataclasses.dataclass
     class Content:
         external: ExternalFile
+        caption: List[RichText] = dataclasses.field(default_factory=lambda: [])
 
     image: Content
 
