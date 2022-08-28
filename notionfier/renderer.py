@@ -85,7 +85,7 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
         return [Text(text=Text.Content(content="\n"))]
 
     def inline_html(self, html):
-        raise NotImplementedError()
+        return [Text(text=Text.Content(content=html))]
 
     def paragraph(self, children_objects: List[NotionObject]):
         text_objects, block_objects = _split_list_of_notion_objects(children_objects)
@@ -151,11 +151,19 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
                 children = block_objects
         return [Quote(quote=Quote.Content(rich_text=rich_text, children=children or None))]
 
-    def block_html(self, html):
-        return []
+    def block_html(self, html: str):
+        return [
+            Paragraph(
+                paragraph=Paragraph.Content(rich_text=[Text(text=Text.Content(content=html))])
+            )
+        ]
 
     def block_error(self, html):
-        return []
+        return [
+            Paragraph(
+                paragraph=Paragraph.Content(rich_text=[Text(text=Text.Content(content=html))])
+            )
+        ]
 
     def list(self, children_objects: List[NotionObject], ordered, level, start=None):
         if not ordered:
