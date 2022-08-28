@@ -9,6 +9,7 @@ __all__ = ["plugin_footnotes"]
 #:
 #:    [^key]
 INLINE_FOOTNOTE_PATTERN = r"\[\^(" + LINK_LABEL + r")\]"
+INLINE_FOOTNOTE_TEXT_PATTERN = r"\^\[(" + LINK_LABEL + r")\]"
 
 #: define a footnote item like::
 #:
@@ -24,15 +25,24 @@ def parse_inline_footnote(inline, m, state):
     if not def_footnotes or key not in def_footnotes:
         return "text", m.group(0)
 
-    duplicates = sum([k == key for k, _ in state["footnotes"]])
+    duplicates = sum([k == key for k, _, __ in state["footnotes"]])
     index = state.get("footnote_index", 0)
     if duplicates == 0:
         index += 1
         state["footnote_index"] = index
-        state["footnotes"].append((key, 0))
+        state["footnotes"].append((key, 0, False))
     else:
-        state["footnotes"].append((key, duplicates))
+        state["footnotes"].append((key, duplicates, False))
     return "footnote_ref", key, index, duplicates
+
+
+def parse_inline_text_footnote(inline, m, state):
+    key = unikey(m.group(1))
+    index = state.get("footnote_index", 0)
+    index += 1
+    state["footnote_index"] = index
+    state["footnotes"].append((key, 0, True))
+    return "footnote_ref", key, index, 0
 
 
 def parse_def_footnote(block, m, state):
@@ -41,9 +51,10 @@ def parse_def_footnote(block, m, state):
         state["def_footnotes"][key] = m.group(3)
 
 
-def parse_footnote_item(block, k, i, state):
+def parse_footnote_item(block, k, i, is_inline_text, state):
     def_footnotes = state["def_footnotes"]
-    text = def_footnotes[k]
+
+    text = k if is_inline_text else def_footnotes[k]
 
     stripped_text = text.strip()
     if "\n" not in stripped_text:
@@ -56,7 +67,7 @@ def parse_footnote_item(block, k, i, state):
         if not isinstance(children, list):
             children = [children]
 
-    return {"type": "footnote_item", "children": children, "params": (k, i)}
+    return {"type": "footnote_item", "children": children, "params": (k, i, is_inline_text)}
 
 
 def md_footnotes_hook(md, result, state):
@@ -65,8 +76,8 @@ def md_footnotes_hook(md, result, state):
         return result
 
     children = [
-        parse_footnote_item(md.block, k, i + 1, state)
-        for i, (k, dup) in enumerate(footnotes_and_duplicates)
+        parse_footnote_item(md.block, k, i + 1, is_inline_text, state)
+        for i, (k, dup, is_inline_text) in enumerate(footnotes_and_duplicates)
         if dup == 0
     ]
     tokens = [{"type": "footnotes", "children": children}]
@@ -78,7 +89,7 @@ def render_ast_footnote_ref(key, index, dup):
     return {"type": "footnote_ref", "key": key, "index": index}
 
 
-def render_ast_footnote_item(children, key, index):
+def render_ast_footnote_item(children, key, index, is_inline_text):
     return {
         "type": "footnote_item",
         "children": children,
@@ -98,11 +109,11 @@ def render_html_footnotes(text):
     return '<section class="footnotes">\n<ol>\n' + text + "</ol>\n</section>\n"
 
 
-def render_html_footnote_item(text, key, index):
+def render_html_footnote_item(text, key, index, is_inline_text):
     i = str(index)
     back = '<a href="#fnref-' + i + '" class="footnote">&#8617;</a>'
 
-    text = text.rstrip()
+    text = key.strip() if is_inline_text else text.rstrip()
     if text.endswith("</p>"):
         text = text[:-4] + back + "</p>"
     else:
@@ -112,11 +123,16 @@ def render_html_footnote_item(text, key, index):
 
 def plugin_footnotes(md):
     md.inline.register_rule("footnote", INLINE_FOOTNOTE_PATTERN, parse_inline_footnote)
+    md.inline.register_rule(
+        "footnote_text", INLINE_FOOTNOTE_TEXT_PATTERN, parse_inline_text_footnote
+    )
     index = md.inline.rules.index("std_link")
     if index != -1:
         md.inline.rules.insert(index, "footnote")
+        md.inline.rules.insert(index + 1, "footnote_text")
     else:
         md.inline.rules.append("footnote")
+        md.inline.rules.append("footnote_text")
 
     md.block.register_rule("def_footnote", DEF_FOOTNOTE, parse_def_footnote)
     index = md.block.rules.index("def_link")

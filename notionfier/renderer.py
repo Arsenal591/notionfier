@@ -215,7 +215,7 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
     def footnotes(self, children_objects: List[NotionObject]):
         return [Divider()] + children_objects
 
-    def footnote_item(self, children_objects: List[NotionObject], key, index):
+    def footnote_item(self, children_objects: List[NotionObject], key, index, is_inline_text):
         # todo: support multi-paragraph footnotes.
         text_objects, block_objects = _split_list_of_notion_objects(children_objects)
         if len(text_objects) == 0 and len(block_objects) > 0:
