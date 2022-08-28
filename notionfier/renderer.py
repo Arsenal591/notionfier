@@ -209,7 +209,7 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
             )
         ]
 
-    def footnote_ref(self, key, index):
+    def footnote_ref(self, key, index, dup):
         return [Text(text=Text.Content(content=f"[{index}]"))]
 
     def footnotes(self, children_objects: List[NotionObject]):

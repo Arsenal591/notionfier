@@ -24,11 +24,15 @@ def parse_inline_footnote(inline, m, state):
     if not def_footnotes or key not in def_footnotes:
         return "text", m.group(0)
 
+    duplicates = sum([k == key for k, _ in state["footnotes"]])
     index = state.get("footnote_index", 0)
-    index += 1
-    state["footnote_index"] = index
-    state["footnotes"].append(key)
-    return "footnote_ref", key, index
+    if duplicates == 0:
+        index += 1
+        state["footnote_index"] = index
+        state["footnotes"].append((key, 0))
+    else:
+        state["footnotes"].append((key, duplicates))
+    return "footnote_ref", key, index, duplicates
 
 
 def parse_def_footnote(block, m, state):
@@ -61,17 +65,21 @@ def parse_footnote_item(block, k, i, state):
 
 
 def md_footnotes_hook(md, result, state):
-    footnotes = state.get("footnotes")
-    if not footnotes:
+    footnotes_and_duplicates = state.get("footnotes")
+    if not footnotes_and_duplicates:
         return result
 
-    children = [parse_footnote_item(md.block, k, i + 1, state) for i, k in enumerate(footnotes)]
+    children = [
+        parse_footnote_item(md.block, k, i + 1, state)
+        for i, (k, dup) in enumerate(footnotes_and_duplicates)
+        if dup == 0
+    ]
     tokens = [{"type": "footnotes", "children": children}]
     output = md.block.render(tokens, md.inline, state)
     return result + output
 
 
-def render_ast_footnote_ref(key, index):
+def render_ast_footnote_ref(key, index, dup):
     return {"type": "footnote_ref", "key": key, "index": index}
 
 
@@ -84,10 +92,11 @@ def render_ast_footnote_item(children, key, index):
     }
 
 
-def render_html_footnote_ref(key, index):
+def render_html_footnote_ref(key, index, dup):
     i = str(index)
-    html = '<sup class="footnote-ref" id="fnref-' + i + '">'
-    return html + '<a href="#fn-' + i + '">' + i + "</a></sup>"
+    id_str = i if dup == 0 else i + ":" + str(dup)
+    html = '<sup class="footnote-ref" id="fnref-' + id_str + '">'
+    return html + '<a href="#fn-' + i + '">' + id_str + "</a></sup>"
 
 
 def render_html_footnotes(text):
