@@ -14,7 +14,7 @@ INLINE_FOOTNOTE_PATTERN = r"\[\^(" + LINK_LABEL + r")\]"
 #:
 #:    [^key]: paragraph text to describe the note
 DEF_FOOTNOTE = re.compile(
-    r"( {0,3})\[\^(" + LINK_LABEL + r")\]:[ \t]*(" r"[^\n]*\n+" r"(?:\1 {1,3}(?! )[^\n]*\n+)*" r")"
+    r"( {0,3})\[\^(" + LINK_LABEL + r")\]:[ \t]*" r"((?:[^\n]*(?:\n+(?: {4}| *\t)[^\n]*)*" r")+)"
 )
 
 
@@ -49,15 +49,10 @@ def parse_footnote_item(block, k, i, state):
     if "\n" not in stripped_text:
         children = [{"type": "paragraph", "text": stripped_text}]
     else:
-        lines = text.splitlines()
-        for second_line in lines[1:]:
-            if second_line:
-                break
-
-        spaces = len(second_line) - len(second_line.lstrip())
-        pattern = re.compile(r"^ {" + str(spaces) + r",}", flags=re.M)
-        text = pattern.sub("", text)
-        children = block.parse_text(text, state)
+        # todo: This is not perfect. Maybe replacing all tabs with 4 spaces is good.
+        pattern = re.compile(r"( {4}| *\t)", flags=re.M)
+        text = pattern.sub("", text, count=1)
+        children = block.parse(text, state, block.rules)
         if not isinstance(children, list):
             children = [children]
 
