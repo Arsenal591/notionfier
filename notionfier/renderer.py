@@ -209,6 +209,28 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
             )
         ]
 
+    def footnote_ref(self, key, index):
+        return [Text(text=Text.Content(content=f"[{index}]"))]
+
+    def footnotes(self, children_objects: List[NotionObject]):
+        return [Divider()] + children_objects
+
+    def footnote_item(self, children_objects: List[NotionObject], key, index):
+        # todo: support multi-paragraph footnotes.
+        text_objects, block_objects = _split_list_of_notion_objects(children_objects)
+        if len(text_objects) == 0 and len(block_objects) > 0:
+            first_block = block_objects[0]
+            if isinstance(first_block, Paragraph):
+                text_objects = first_block.paragraph.rich_text
+                block_objects = block_objects[1:]
+        return [
+            NumberedListItem(
+                numbered_list_item=NumberedListItem.Content(
+                    rich_text=text_objects, children=block_objects
+                )
+            )
+        ]
+
     def strikethrough(self, children_objects: List[NotionObject]):
         text_objects, block_objects = _split_list_of_notion_objects(children_objects)
         assert len(block_objects) == 0
