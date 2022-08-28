@@ -56,11 +56,17 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
         text_objects, block_objects = _split_list_of_notion_objects(children_objects)
         assert len(block_objects) == 0
         result = []
-        for obj in text_objects:
-            assert isinstance(obj, Text)  # todo: check this
-            result.append(
-                Text(text=Text.Content(content=obj.text.content, link=LinkObject(url=link)))
-            )
+        if len(text_objects) > 0:
+            for obj in text_objects:
+                assert isinstance(obj, Text)  # todo: check this
+                result.append(
+                    Text(
+                        text=Text.Content(content=obj.text.content, link=LinkObject(url=link)),
+                        annotations=obj.annotations,
+                    )
+                )
+        else:
+            result.append(Text(text=Text.Content(content=link, link=LinkObject(url=link))))
         return result
 
     def image(self, src, alt="", title: Optional[List[NotionObject]] = None):
