@@ -3,10 +3,11 @@ from typing import Any, Dict, List, Optional
 
 from notionfier.api.models.common_objects import ExternalFile, RichText, TextColor
 from notionfier.api.models.consts import CodeLanguage
+from notionfier.api.models.utils import NotionObject
 
 
 @dataclasses.dataclass
-class BlockObject:
+class BlockObject(NotionObject):
     pass
 
 

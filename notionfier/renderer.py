@@ -216,7 +216,6 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
         return [Divider()] + children_objects
 
     def footnote_item(self, children_objects: List[NotionObject], key, index, is_inline_text):
-        # todo: support multi-paragraph footnotes.
         text_objects, block_objects = _split_list_of_notion_objects(children_objects)
         if len(text_objects) == 0 and len(block_objects) > 0:
             first_block = block_objects[0]
@@ -235,6 +234,32 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
         text_objects, block_objects = _split_list_of_notion_objects(children_objects)
         assert len(block_objects) == 0
         return [_process_annotation(x, "strikethrough", True) for x in text_objects]
+
+    def def_list(self, children_objects: List[NotionObject]):
+        return children_objects
+
+    def def_list_header(self, children_objects: List[NotionObject]):
+        text_objects, block_objects = _split_list_of_notion_objects(children_objects)
+        assert len(block_objects) == 0
+        for obj in text_objects:
+            if obj.annotations is None:
+                obj.annotations = Annotation()
+            obj.annotations.bold = True
+            obj.annotations.italic = True
+        return [Paragraph(paragraph=Paragraph.Content(rich_text=text_objects))]
+
+    def def_list_item(self, children_objects: List[NotionObject]):
+        # todo: support multi-paragraph def list items
+        text_objects, block_objects = _split_list_of_notion_objects(children_objects)
+        if len(text_objects) == 0 and len(block_objects) > 0:
+            first_block = block_objects[0]
+            if isinstance(first_block, Paragraph):
+                text_objects = first_block.paragraph.rich_text
+                block_objects = block_objects[1:]
+        result: List[NotionObject] = [
+            Paragraph(paragraph=Paragraph.Content(rich_text=text_objects))
+        ]
+        return result + block_objects
 
     def finalize(self, data):
         return [item for sublist in data for item in sublist]
