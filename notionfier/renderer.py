@@ -17,6 +17,7 @@ from notionfier.api.models.block_objects import (
     Quote,
     Table,
     TableRow,
+    Todo,
 )
 from notionfier.api.models.common_objects import Annotation, LinkObject, RichText, Text
 from notionfier.api.models.consts import CodeLanguage
@@ -305,6 +306,21 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
 
         # A little hack here: we use `TableRow` as a temporary container for a table cell.
         return [TableRow(table_row=TableRow.Content(cells=[text_objects]))]
+
+    def task_list_item(self, children_objects: List[NotionObject], level: int, checked: bool):
+        text_objects, block_objects = _split_list_of_notion_objects(children_objects)
+        if len(text_objects) == 0 and len(block_objects) > 0:
+            first_block = block_objects[0]
+            if isinstance(first_block, Paragraph):
+                text_objects = first_block.paragraph.rich_text
+                block_objects = block_objects[1:]
+        return [
+            Todo(
+                to_do=Todo.Content(
+                    rich_text=text_objects, children=block_objects or None, checked=checked
+                )
+            )
+        ]
 
     def finalize(self, data):
         return [item for sublist in data for item in sublist]

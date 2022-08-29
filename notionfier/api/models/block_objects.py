@@ -89,6 +89,18 @@ class NumberedListItem(BlockObject):
 
 
 @dataclasses.dataclass
+class Todo(BlockObject):
+    @dataclasses.dataclass
+    class Content:
+        rich_text: List[RichText]
+        checked: bool
+        children: Optional[List["BlockObject"]] = None
+        color: TextColor = TextColor.default
+
+    to_do: Content
+
+
+@dataclasses.dataclass
 class Code(BlockObject):
     @dataclasses.dataclass
     class Content:
