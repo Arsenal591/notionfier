@@ -2,12 +2,11 @@ from typing import Any, List, Optional, Tuple
 
 import mistune.renderers
 
-from notionfier.api.models.block_objects import (
+from notionfier.api.block_objects import (
     BlockObject,
     BulletedListItem,
     Code,
     Divider,
-    ExternalFile,
     Heading1,
     Heading2,
     Heading3,
@@ -19,9 +18,9 @@ from notionfier.api.models.block_objects import (
     TableRow,
     Todo,
 )
-from notionfier.api.models.common_objects import Annotation, LinkObject, RichText, Text
-from notionfier.api.models.consts import CodeLanguage
-from notionfier.api.models.utils import NotionObject
+from notionfier.api.common_objects import Annotation, ExternalFile, LinkObject, RichText, Text
+from notionfier.api.consts import CodeLanguage
+from notionfier.api.utils import NotionObject
 
 
 def _split_list_of_notion_objects(
@@ -216,7 +215,8 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
         return [Text(text=Text.Content(content=f"[{index}]"))]
 
     def footnotes(self, children_objects: List[NotionObject]):
-        return [Divider()] + children_objects
+        result: List[NotionObject] = [Divider()]
+        return result + children_objects
 
     def footnote_item(self, children_objects: List[NotionObject], key, index, is_inline_text):
         text_objects, block_objects = _split_list_of_notion_objects(children_objects)
@@ -259,9 +259,7 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
             if isinstance(first_block, Paragraph):
                 text_objects = first_block.paragraph.rich_text
                 block_objects = block_objects[1:]
-        result: List[NotionObject] = [
-            Paragraph(paragraph=Paragraph.Content(rich_text=text_objects))
-        ]
+        result: List[BlockObject] = [Paragraph(paragraph=Paragraph.Content(rich_text=text_objects))]
         return result + block_objects
 
     def table(self, children_objects: List[NotionObject]):
@@ -276,7 +274,7 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
                     table_width=width,
                     has_row_header=False,
                     has_column_header=True,
-                    children=children_objects,
+                    children=children_objects,  # type: ignore
                 )
             )
         ]

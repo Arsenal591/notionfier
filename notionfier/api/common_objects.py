@@ -1,8 +1,8 @@
 import dataclasses
 from typing import Optional
 
-from notionfier.api.models.consts import TextColor
-from notionfier.api.models.utils import NotionObject
+from notionfier.api.consts import TextColor
+from notionfier.api.utils import NotionObject
 
 
 # Rich text objects

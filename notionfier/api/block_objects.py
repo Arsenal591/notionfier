@@ -1,9 +1,9 @@
 import dataclasses
 from typing import Any, Dict, List, Optional
 
-from notionfier.api.models.common_objects import ExternalFile, RichText, TextColor
-from notionfier.api.models.consts import CodeLanguage
-from notionfier.api.models.utils import NotionObject
+from notionfier.api.common_objects import ExternalFile, RichText, TextColor
+from notionfier.api.consts import CodeLanguage
+from notionfier.api.utils import NotionObject
 
 
 @dataclasses.dataclass
