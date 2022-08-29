@@ -15,6 +15,8 @@ from notionfier.api.models.block_objects import (
     NumberedListItem,
     Paragraph,
     Quote,
+    Table,
+    TableRow,
 )
 from notionfier.api.models.common_objects import Annotation, LinkObject, RichText, Text
 from notionfier.api.models.consts import CodeLanguage
@@ -260,6 +262,49 @@ class MyRenderer(mistune.renderers.HTMLRenderer):
             Paragraph(paragraph=Paragraph.Content(rich_text=text_objects))
         ]
         return result + block_objects
+
+    def table(self, children_objects: List[NotionObject]):
+        assert len(children_objects) > 0
+        width = 0
+        for obj in children_objects:
+            assert isinstance(obj, TableRow)
+            width = len(obj.table_row.cells)
+        return [
+            Table(
+                table=Table.Content(
+                    table_width=width,
+                    has_row_header=False,
+                    has_column_header=True,
+                    children=children_objects,
+                )
+            )
+        ]
+
+    def table_head(self, children_objects: List[NotionObject]):
+        all_cells: List[List[RichText]] = []
+        for obj in children_objects:
+            assert isinstance(obj, TableRow)
+            all_cells.append(obj.table_row.cells[0])
+        return [TableRow(table_row=TableRow.Content(cells=all_cells))]
+
+    def table_body(self, children_objects: List[NotionObject]):
+        for obj in children_objects:
+            assert isinstance(obj, TableRow)
+        return children_objects
+
+    def table_row(self, children_objects: List[NotionObject]):
+        all_cells: List[List[RichText]] = []
+        for obj in children_objects:
+            assert isinstance(obj, TableRow)
+            all_cells.append(obj.table_row.cells[0])
+        return [TableRow(table_row=TableRow.Content(cells=all_cells))]
+
+    def table_cell(self, children_objects: List[NotionObject], align=None, is_head=False):
+        text_objects, block_objects = _split_list_of_notion_objects(children_objects)
+        assert len(block_objects) == 0
+
+        # A little hack here: we use `TableRow` as a temporary container for a table cell.
+        return [TableRow(table_row=TableRow.Content(cells=[text_objects]))]
 
     def finalize(self, data):
         return [item for sublist in data for item in sublist]

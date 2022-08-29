@@ -121,3 +121,24 @@ class Equation(BlockObject):
 @dataclasses.dataclass
 class Divider(BlockObject):
     divider: Dict[str, Any] = dataclasses.field(default_factory=lambda: {})
+
+
+@dataclasses.dataclass
+class TableRow(NotionObject):
+    @dataclasses.dataclass
+    class Content:
+        cells: List[List[RichText]]
+
+    table_row: Content
+
+
+@dataclasses.dataclass
+class Table(BlockObject):
+    @dataclasses.dataclass
+    class Content:
+        table_width: int
+        has_column_header: bool
+        has_row_header: bool
+        children: List[TableRow]
+
+    table: Content
